@@ -90,6 +90,20 @@ export interface ICategory {
   updatedAt: string;
 }
 
+export interface ICartItem {
+  product: IProduct | string;
+  qty: number;
+}
+
+export interface ICart {
+  _id: string;
+  user?: string;
+  sessionId?: string;
+  items: ICartItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type PaymentMethodEnum = 'COD' | 'Card' | 'JazzCash' | 'Easypaisa';
 export type PaymentStatusEnum = 'pending' | 'paid' | 'failed' | 'refunded';
 export type OrderStatusEnum = 'placed' | 'confirmed' | 'packed' | 'shipped' | 'delivered' | 'cancelled';
@@ -180,7 +194,8 @@ export interface IContactMessage {
   phone?: string;
   subject: string;
   message: string;
-  isRead: boolean;
+  isRead?: boolean;
+  status?: 'new' | 'read' | 'responded';
   createdAt: string;
   updatedAt: string;
 }
