@@ -150,6 +150,22 @@ interface ProductState {
   deleteProduct: (id: string) => Promise<void>;
 }
 
+// BroadcastChannel for instant cross-tab sync
+let broadcastChannel: BroadcastChannel | null = null;
+if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+  try {
+    broadcastChannel = new BroadcastChannel('farms_live_sync');
+  } catch {}
+}
+
+function broadcastChange() {
+  if (broadcastChannel) {
+    try {
+      broadcastChannel.postMessage({ type: 'PRODUCT_CHANGED', timestamp: Date.now() });
+    } catch {}
+  }
+}
+
 export const useProductStore = create<ProductState>((set, get) => ({
   products: INITIAL_PRODUCTS,
   loading: false,
@@ -187,25 +203,22 @@ export const useProductStore = create<ProductState>((set, get) => ({
     }
   },
   updateProduct: async (id, updates) => {
-    // 1. Send update to API first
     await fetchApi(`/products/${id}`, {
       method: 'PUT',
       body: JSON.stringify(updates),
     });
 
-    // 2. Only update state upon confirmed API success
     const current = get().products;
     const updated = current.map((p) => (p.id === id || p.slug === id ? { ...p, ...updates } : p));
     set({ products: updated });
+    broadcastChange();
   },
   addProduct: async (product) => {
-    // 1. Send create to API first
     const res = await fetchApi('/products', {
       method: 'POST',
       body: JSON.stringify(product),
     });
 
-    // 2. Only update state upon confirmed API success
     const createdItem: ProductItem = res.data
       ? {
           id: res.data._id || product.id,
@@ -224,13 +237,12 @@ export const useProductStore = create<ProductState>((set, get) => ({
       : product;
 
     set({ products: [createdItem, ...get().products] });
+    broadcastChange();
   },
   deleteProduct: async (id) => {
-    // 1. Send delete to API first
     await fetchApi(`/products/${id}`, { method: 'DELETE' });
-
-    // 2. Only update state upon confirmed API success
     const updated = get().products.filter((p) => p.id !== id && p.slug !== id);
     set({ products: updated });
+    broadcastChange();
   },
 }));

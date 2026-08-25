@@ -242,6 +242,20 @@ async function connectDb() {
   }
 }
 
+// SSE Broadcast Manager
+let sseClients: any[] = [];
+function broadcastSse(data: any) {
+  const payload = `data: ${JSON.stringify(data)}\n\n`;
+  sseClients = sseClients.filter((client) => {
+    try {
+      client.write(payload);
+      return true;
+    } catch {
+      return false;
+    }
+  });
+}
+
 export default async function handler(req: any, res: any) {
   // Edge CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -259,7 +273,23 @@ export default async function handler(req: any, res: any) {
   try {
     await connectDb();
 
-    // 1. Health check & Root
+    // 1. SSE Real-Time Stream Endpoint
+    if ((url === '/api/v1/events' || url === '/events') && method === 'GET') {
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.flushHeaders?.();
+
+      res.write(`data: ${JSON.stringify({ type: 'CONNECTED', timestamp: Date.now() })}\n\n`);
+      sseClients.push(res);
+
+      req.on('close', () => {
+        sseClients = sseClients.filter((c) => c !== res);
+      });
+      return;
+    }
+
+    // 2. Health check & Root
     if (url === '/' || url === '/api/v1' || url === '/api/v1/health' || url === '/health') {
       return res.status(200).json({
         success: true,
@@ -269,7 +299,7 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    // 2. Auth Login
+    // 3. Auth Login
     if (url.startsWith('/api/v1/auth/login') && method === 'POST') {
       const { email, password } = req.body || {};
       const normalizedEmail = (email || '').toLowerCase().trim();
@@ -306,7 +336,7 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    // 3. Products GET
+    // 4. Products GET
     if (url.startsWith('/api/v1/products') && method === 'GET') {
       let items = await Product.find({ isActive: true }).sort({ isFeatured: -1, createdAt: -1 }).lean();
       if (!items || items.length === 0) {
@@ -318,14 +348,15 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    // 4. Products POST
+    // 5. Products POST
     if (url.startsWith('/api/v1/products') && method === 'POST') {
       const newProduct = new Product(req.body);
       await newProduct.save();
+      broadcastSse({ type: 'PRODUCT_CREATED', product: newProduct });
       return res.status(201).json({ success: true, data: newProduct });
     }
 
-    // 5. Products PUT
+    // 6. Products PUT
     if (url.startsWith('/api/v1/products') && method === 'PUT') {
       const parts = url.split('/');
       const id = parts[parts.length - 1];
@@ -334,20 +365,22 @@ export default async function handler(req: any, res: any) {
         { $set: req.body },
         { new: true, upsert: true }
       );
+      broadcastSse({ type: 'PRODUCT_UPDATED', product: updated });
       return res.status(200).json({ success: true, data: updated });
     }
 
-    // 6. Products DELETE
+    // 7. Products DELETE
     if (url.startsWith('/api/v1/products') && method === 'DELETE') {
       const parts = url.split('/');
       const id = parts[parts.length - 1];
       await Product.findOneAndDelete({
         $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { slug: id }, { sku: id }],
       });
+      broadcastSse({ type: 'PRODUCT_DELETED', id });
       return res.status(200).json({ success: true, message: 'Product deleted successfully' });
     }
 
-    // 7. Orders POST
+    // 8. Orders POST
     if (url.startsWith('/api/v1/orders') && method === 'POST') {
       const order = new Order({
         ...req.body,
@@ -357,7 +390,7 @@ export default async function handler(req: any, res: any) {
       return res.status(201).json({ success: true, data: order });
     }
 
-    // Fallback 404
+    // Fallback
     return res.status(200).json({
       success: true,
       message: "The Farm's API Operational",
