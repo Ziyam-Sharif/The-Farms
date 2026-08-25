@@ -1,5 +1,69 @@
-import app from '../src/server';
+import express from 'express';
+import cookieParser from 'cookie-parser';
+import mongoose from 'mongoose';
+import helmet from 'helmet';
+import cors from 'cors';
+import mongoSanitize from 'express-mongo-sanitize';
 
-export default function handler(req: any, res: any) {
-  return app(req, res);
-}
+import authRoutes from '../src/routes/auth.routes';
+import productRoutes from '../src/routes/product.routes';
+import orderRoutes from '../src/routes/order.routes';
+import categoryRoutes from '../src/routes/category.routes';
+import blogRoutes from '../src/routes/blog.routes';
+import reviewRoutes from '../src/routes/review.routes';
+import contactRoutes from '../src/routes/contact.routes';
+import newsletterRoutes from '../src/routes/newsletter.routes';
+import adminRoutes from '../src/routes/admin.routes';
+import { errorHandler } from '../src/middlewares/errorHandler';
+import { connectDB } from '../src/config/db';
+
+const app: express.Application = express();
+
+app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+app.use(cors({ origin: true, credentials: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cookieParser());
+app.use(mongoSanitize());
+
+// Connect DB middleware
+app.use(async (_req, _res, next) => {
+  try {
+    await connectDB();
+  } catch (err: any) {
+    console.error('Serverless DB error:', err.message || err);
+  }
+  next();
+});
+
+app.get('/api/v1/health', (_req, res) => {
+  res.json({
+    success: true,
+    status: 'ok',
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'connecting/standby',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+app.get('/', (_req, res) => {
+  res.json({
+    success: true,
+    message: "The Farm's Foods API is Live & Operational.",
+    healthEndpoint: '/api/v1/health',
+    version: '1.0.0',
+  });
+});
+
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/products', productRoutes);
+app.use('/api/v1/orders', orderRoutes);
+app.use('/api/v1/categories', categoryRoutes);
+app.use('/api/v1/blog', blogRoutes);
+app.use('/api/v1', reviewRoutes);
+app.use('/api/v1/contact', contactRoutes);
+app.use('/api/v1/newsletter', newsletterRoutes);
+app.use('/api/v1/admin', adminRoutes);
+
+app.use(errorHandler);
+
+export default app;
