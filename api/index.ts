@@ -1,3 +1,1 @@
-import handler from './apps/server/api/index';
-
-export default handler;
+export { default } from './apps/server/api/index';
