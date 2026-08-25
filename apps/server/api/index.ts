@@ -1,9 +1,7 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, Response } from 'express';
 import cookieParser from 'cookie-parser';
 import mongoose from 'mongoose';
-import helmet from 'helmet';
 import cors from 'cors';
-import mongoSanitize from 'express-mongo-sanitize';
 
 import authRoutes from '../src/routes/auth.routes';
 import productRoutes from '../src/routes/product.routes';
@@ -19,7 +17,6 @@ import { connectDB } from '../src/config/db';
 
 const app: express.Application = express();
 
-app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(
   cors({
     origin: true,
@@ -31,7 +28,6 @@ app.use(
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
-app.use(mongoSanitize());
 
 // Connect DB middleware
 app.use(async (_req, _res, next) => {
@@ -75,7 +71,7 @@ app.use('/api/v1/admin', adminRoutes);
 
 app.use(errorHandler);
 
-export default function handler(req: Request, res: Response) {
+export default async function handler(req: Request, res: Response) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,PATCH');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
@@ -85,5 +81,13 @@ export default function handler(req: Request, res: Response) {
     return res.status(200).end();
   }
 
-  return (app as any)(req, res);
+  try {
+    return (app as any)(req, res);
+  } catch (error: any) {
+    console.error('Handler runtime error:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Internal Server Error',
+    });
+  }
 }
