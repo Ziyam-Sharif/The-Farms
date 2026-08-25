@@ -1,5 +1,6 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
+import mongoose from 'mongoose';
 import { env } from './config/env';
 import { connectDB } from './config/db';
 import {
@@ -22,6 +23,18 @@ import adminRoutes from './routes/admin.routes';
 
 const app: express.Application = express();
 
+// Ensure DB connection for Serverless / Vercel Edge requests
+app.use(async (_req, _res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    try {
+      await connectDB();
+    } catch (err: any) {
+      console.warn('[Serverless DB] Connect fallback:', err.message || err);
+    }
+  }
+  next();
+});
+
 // Core & Security Middlewares
 app.use(helmetMiddleware);
 app.use(corsMiddleware);
@@ -37,7 +50,17 @@ app.get('/api/v1/health', (_req, res) => {
     success: true,
     status: 'ok',
     environment: env.NODE_ENV,
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'connecting/standby',
     timestamp: new Date().toISOString(),
+  });
+});
+
+app.get('/', (_req, res) => {
+  res.json({
+    success: true,
+    message: "The Farm's Foods API is Live & Operational.",
+    healthEndpoint: '/api/v1/health',
+    version: '1.0.0',
   });
 });
 
@@ -55,7 +78,8 @@ app.use('/api/v1/admin', adminRoutes);
 // Centralized Error Handler
 app.use(errorHandler);
 
-if (process.env.NODE_ENV !== 'test') {
+// Standalone server execution (Local / Container)
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
   connectDB()
     .then(() => {
       console.log('[Server] MongoDB connected successfully.');
