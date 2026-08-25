@@ -1,0 +1,43 @@
+{
+  "name": "@farms/web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@farms/shared-types": "workspace:*",
+    "@farms/ui": "workspace:*",
+    "@react-three/drei": "^9.102.0",
+    "@react-three/fiber": "^8.15.19",
+    "@tanstack/react-query": "^5.28.4",
+    "clsx": "^2.1.0",
+    "gsap": "^3.12.5",
+    "lenis": "^1.0.42",
+    "lucide-react": "^0.354.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.51.0",
+    "react-router-dom": "^6.22.3",
+    "three": "^0.162.0",
+    "zod": "^3.22.4",
+    "zustand": "^4.5.2"
+  },
+  "devDependencies": {
+    "@types/three": "^0.162.0",
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.18",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.1.6",
+    "vitest": "^1.3.1"
+  }
+}

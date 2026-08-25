@@ -1,0 +1,335 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Nastaliq+Urdu:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────────────────────────
+   TRUE MEDIUM-TONED RICH ROASTED CLAY & GOLDEN EARTH PALETTE
+   (Distinct 50% Medium Depth - Neither Light Nor Dark)
+───────────────────────────────────────────────────────────────── */
+@layer base {
+  :root {
+    /* Rich medium-depth roasted sandstone & warm spice earth (~50% Lightness) */
+    --bg-paper: linear-gradient(135deg, #BAA38A 0%, #A68D72 30%, #BFA78E 65%, #988066 100%);
+    --text-charcoal: #0D0905;
+    --color-turmeric: #D97706;
+    --color-chilli: #B91C1C;
+    --color-forest: #064E3B;
+    --card-bg: #FFFDF8;
+    --card-border: rgba(65, 45, 20, 0.28);
+    --card-shadow: 0 18px 45px rgba(45, 30, 10, 0.25), 0 4px 14px rgba(0, 0, 0, 0.12);
+    --noise-opacity: 0.03;
+  }
+
+  .dark {
+    --bg-paper: radial-gradient(circle at 15% 15%, #18231C 0%, #0E1612 28%, #070B09 60%, #030504 100%);
+    --text-charcoal: #F8F5EE;
+    --card-bg: rgba(16, 24, 20, 0.94);
+    --card-border: rgba(234, 161, 34, 0.28);
+    --card-shadow: 0 20px 60px rgba(0, 0, 0, 0.75), 0 0 35px rgba(234, 161, 34, 0.12);
+    --noise-opacity: 0.05;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background: var(--bg-paper);
+    background-size: 200% 200%;
+    animation: auroraGlow 16s ease infinite alternate;
+    background-attachment: fixed;
+    color: var(--text-charcoal);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    overflow-x: hidden;
+    transition: background 0.4s ease, color 0.3s ease;
+  }
+
+  /* CONTINUOUS AMBIENT LIGHT MESH */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background: 
+      radial-gradient(circle at 15% 20%, rgba(217, 119, 6, 0.16) 0%, transparent 45%),
+      radial-gradient(circle at 85% 45%, rgba(185, 28, 28, 0.12) 0%, transparent 50%),
+      radial-gradient(circle at 50% 85%, rgba(6, 78, 59, 0.14) 0%, transparent 55%);
+    animation: movingMesh 12s ease-in-out infinite alternate;
+  }
+
+  .dark body::after {
+    background: 
+      radial-gradient(circle at 15% 20%, rgba(234, 161, 34, 0.15) 0%, transparent 45%),
+      radial-gradient(circle at 85% 45%, rgba(245, 158, 11, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 50% 85%, rgba(16, 185, 129, 0.10) 0%, transparent 55%);
+  }
+
+  /* Film Grain Overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: -50%;
+    width: 200%;
+    height: 200%;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+    opacity: var(--noise-opacity);
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  h1, h2, h3, .font-serif-display {
+    font-family: 'Playfair Display', serif;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   GLOBAL HAND CURSOR FORCING
+───────────────────────────────────────────────────────────────── */
+a, button, [role="button"], .card, [class*="card"], [class*="panel"], [class*="item"], [class*="box"] {
+  cursor: pointer !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ANIMATIONS & KEYFRAMES
+───────────────────────────────────────────────────────────────── */
+@keyframes auroraGlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes movingMesh {
+  0% { transform: scale(1) translate(0px, 0px); }
+  50% { transform: scale(1.12) translate(25px, -18px); }
+  100% { transform: scale(0.96) translate(-15px, 20px); }
+}
+
+@keyframes floatContinuous {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-16px) rotate(1.5deg); }
+}
+
+@keyframes floatReverse {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(16px) rotate(-1.5deg); }
+}
+
+@keyframes pulseGoldGlow {
+  0%, 100% { box-shadow: 0 0 25px rgba(234, 161, 34, 0.35); }
+  50% { box-shadow: 0 0 55px rgba(234, 161, 34, 0.75); }
+}
+
+@keyframes twinkleStar {
+  0% {
+    transform: scale(0.7) rotate(0deg);
+    opacity: 0.3;
+    filter: drop-shadow(0 0 2px currentColor);
+  }
+  50% {
+    transform: scale(1.25) rotate(15deg);
+    opacity: 0.95;
+    filter: drop-shadow(0 0 8px currentColor);
+  }
+  100% {
+    transform: scale(0.85) rotate(-10deg);
+    opacity: 0.4;
+    filter: drop-shadow(0 0 3px currentColor);
+  }
+}
+
+@keyframes spinSlow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   DISTINCT & UNIQUE CARD HOVER VARIATIONS (HIGH CONTRAST)
+───────────────────────────────────────────────────────────────── */
+@layer components {
+  .glass-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    box-shadow: var(--card-shadow);
+  }
+
+  /* 1. PRODUCT CARDS HOVER VARIATION */
+  .product-card {
+    position: relative;
+    border-radius: 20px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    box-shadow: var(--card-shadow);
+    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.3s ease;
+    will-change: transform;
+    cursor: pointer !important;
+  }
+  .product-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    border-color: rgba(217, 119, 6, 0.95);
+    box-shadow: 0 26px 55px rgba(50, 30, 10, 0.32),
+                0 0 25px rgba(234, 161, 34, 0.25),
+                0 4px 15px rgba(0, 0, 0, 0.10);
+  }
+
+  /* 2. FEATURE CARDS HOVER VARIATION */
+  .feature-card {
+    cursor: pointer !important;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    box-shadow: var(--card-shadow);
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.3s ease;
+  }
+  .feature-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    border-color: rgba(217, 119, 6, 0.9);
+    box-shadow: 0 24px 50px rgba(50, 30, 10, 0.30);
+  }
+
+  /* 3. STAT CARDS HOVER VARIATION */
+  .stat-card {
+    cursor: pointer !important;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    box-shadow: var(--card-shadow);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.4s ease,
+                border-color 0.3s ease;
+  }
+  .stat-card:hover {
+    transform: scale(1.05) translateY(-4px);
+    border-color: rgba(217, 119, 6, 0.95);
+    box-shadow: 0 20px 42px rgba(50, 30, 10, 0.28);
+  }
+
+  /* 4. JOURNEY STEP CARDS HOVER VARIATION */
+  .journey-card {
+    cursor: pointer !important;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    box-shadow: var(--card-shadow);
+    transition: transform 0.45s ease, box-shadow 0.45s ease, border-color 0.35s ease;
+  }
+  .journey-card:hover {
+    transform: translateY(-6px) translateX(4px);
+    border-color: rgba(217, 119, 6, 0.9);
+    box-shadow: 0 20px 42px rgba(6, 78, 59, 0.25);
+  }
+
+  /* 5. TESTIMONIAL CARDS HOVER VARIATION */
+  .testimonial-card {
+    cursor: pointer !important;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    box-shadow: var(--card-shadow);
+    transition: transform 0.4s ease, box-shadow 0.4s ease, border-color 0.3s ease;
+  }
+  .testimonial-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(185, 28, 28, 0.7);
+    box-shadow: 0 22px 48px rgba(50, 30, 10, 0.25);
+  }
+
+  /* 6. TEAM CARDS HOVER VARIATION */
+  .team-card {
+    cursor: pointer !important;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    box-shadow: var(--card-shadow);
+    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.45s ease,
+                border-color 0.3s ease;
+  }
+  .team-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    border-color: rgba(217, 119, 6, 0.9);
+    box-shadow: 0 24px 48px rgba(50, 30, 10, 0.28);
+  }
+
+  /* Generic interactive glass panel cards */
+  .glass-panel-card {
+    cursor: pointer !important;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    box-shadow: var(--card-shadow);
+    transition: transform 0.4s ease, box-shadow 0.4s ease, border-color 0.3s ease;
+  }
+  .glass-panel-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(217, 119, 6, 0.9);
+    box-shadow: 0 22px 48px rgba(50, 30, 10, 0.26);
+  }
+
+  /* Shimmering Button Component */
+  .btn-shimmer {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #EAA122 0%, #F4BA35 50%, #D98A10 100%);
+    color: #070908;
+    transition: all 0.35s ease;
+    cursor: pointer !important;
+  }
+  .btn-shimmer::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -60%;
+    width: 40%;
+    height: 200%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+    transform: rotate(30deg);
+    animation: btnShimmer 3.5s infinite;
+  }
+  .btn-shimmer:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 12px 35px rgba(234, 161, 34, 0.55);
+  }
+
+  @keyframes btnShimmer {
+    0% { left: -60%; }
+    30% { left: 140%; }
+    100% { left: 140%; }
+  }
+
+  .text-gradient-gold {
+    background: linear-gradient(135deg, #92400E 0%, #B45309 50%, #78350F 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .dark .text-gradient-gold {
+    background: linear-gradient(135deg, #EAA122 0%, #FFD700 50%, #E59819 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .tag-glow {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider text-amber-950 dark:text-turmeric-400 bg-amber-600/20 dark:bg-turmeric-500/10 border border-amber-900/35 dark:border-turmeric-500/30;
+    box-shadow: 0 0 15px rgba(180, 83, 9, 0.20);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   MARQUEE SEAMLESS LOOP
+───────────────────────────────────────────────────────────────── */
+.marquee-track {
+  display: flex;
+  gap: 3rem;
+  width: max-content;
+  animation: marqueeScroll 28s linear infinite;
+}
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+@keyframes marqueeScroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}

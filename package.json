@@ -1,0 +1,34 @@
+{
+  "name": "farms-foods-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "description": "The Farm's — 3D E-Commerce Monorepo Platform",
+  "scripts": {
+    "dev:server": "pnpm --filter @farms/server dev",
+    "dev:web": "pnpm --filter @farms/web dev",
+    "dev:admin": "pnpm --filter @farms/admin dev",
+    "build:types": "pnpm --filter @farms/shared-types build",
+    "build:ui": "pnpm --filter @farms/ui build",
+    "build:server": "pnpm --filter @farms/server build",
+    "build:web": "pnpm --filter @farms/web build",
+    "build:admin": "pnpm --filter @farms/admin build",
+    "build": "pnpm build:types && pnpm build:ui && pnpm build:server && pnpm build:web && pnpm build:admin",
+    "typecheck": "pnpm --recursive run typecheck",
+    "test": "pnpm --recursive run test",
+    "lint": "pnpm --recursive run lint",
+    "seed": "pnpm --filter @farms/server seed"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "bcrypt",
+      "esbuild"
+    ]
+  }
+}
