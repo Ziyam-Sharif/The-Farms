@@ -16,6 +16,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { HeroScene } from '../three/HeroScene';
 import { useCartStore } from '../store/cartStore';
+import { useProductStore, ProductItem } from '../store/productStore';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -27,61 +28,6 @@ const MARQUEE = [
   'Est. 2015',
   'No Mixings or Fillers',
   'Lahore — Karachi — Nationwide',
-];
-
-const BESTSELLERS = [
-  {
-    id: 'p1',
-    slug: 'turmeric-powder',
-    title: 'Turmeric Powder',
-    urduTitle: 'خالص ہلدی پاؤڈر',
-    urduShort: 'ہلدی',
-    category: 'Spices',
-    price: 650,
-    weight: '200g',
-    desc: 'Our signature Haldi — organic roots, sun-dried and slowly ground to protect curcumin and warm aroma.',
-    mainImg: '/farms-images/turmeric-main.jpg',
-    altImg: '/farms-images/turmeric-alt.jpg',
-  },
-  {
-    id: 'p3',
-    slug: 'coriander-powder',
-    title: 'Coriander Powder',
-    urduTitle: 'خالص دھنیا پاؤڈر',
-    urduShort: 'دھنیا',
-    category: 'Spices',
-    price: 550,
-    weight: '200g',
-    desc: 'Freshly ground Dhania with a rich aroma and cooling citrusy lift for every curry.',
-    mainImg: '/farms-images/coriander-main.jpg',
-    altImg: '/farms-images/coriander-alt.jpg',
-  },
-  {
-    id: 'p2',
-    slug: 'red-chilli-powder',
-    title: 'Red Chilli Powder',
-    urduTitle: 'لال مرچ',
-    urduShort: 'لال مرچ',
-    category: 'Spices',
-    price: 600,
-    weight: '200g',
-    desc: 'Sun-ripened chillies slowly ground — a vibrant red powder with clean, sharp heat.',
-    mainImg: '/farms-images/chilli-main.jpg',
-    altImg: '/farms-images/chilli-alt.jpg',
-  },
-  {
-    id: 'p5',
-    slug: 'chhoti-beri-honey',
-    title: 'Chhoti Beri Sidr Honey',
-    urduTitle: 'سدر شہد',
-    urduShort: 'شہد',
-    category: 'Honey',
-    price: 2450,
-    weight: '500g',
-    desc: 'Wild-harvested Sidr honey from Changa Manga — thick, buttery and 100% raw.',
-    mainImg: '/farms-images/honey-main.jpg',
-    altImg: '/farms-images/honey-main.jpg',
-  },
 ];
 
 const JOURNEY_STEPS = [
@@ -183,6 +129,13 @@ export const HomePage: React.FC = () => {
 
   const addItem = useCartStore((s) => s.addItem);
   const openCart = useCartStore((s) => s.openCart);
+
+  const products = useProductStore((s) => s.products);
+  const fetchProducts = useProductStore((s) => s.fetchProducts);
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -291,20 +244,20 @@ export const HomePage: React.FC = () => {
     return () => ctx.revert();
   }, []);
 
-  const handleQuickAdd = (product: typeof BESTSELLERS[0]) => {
+  const handleQuickAdd = (product: ProductItem) => {
     addItem(
       {
         _id: product.id,
         title: product.title,
         slug: product.slug,
-        description: product.desc,
-        shortDescription: product.desc,
+        description: product.shortDesc,
+        shortDescription: product.shortDesc,
         category: product.category,
         price: product.price,
         weight: product.weight,
         images: [{ url: product.mainImg, alt: product.title }],
         sku: `SKU-${product.id}`,
-        stock: 50,
+        stock: product.stock || 50,
         isFeatured: true,
         isActive: true,
         ratingAvg: 5.0,
@@ -438,7 +391,7 @@ export const HomePage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-4 gap-4 sm:gap-6 2xl:gap-8 justify-center">
-          {BESTSELLERS.map((p) => (
+          {(products.slice(0, 4)).map((p) => (
             <div
               key={p.id}
               className="product-card group p-3.5 sm:p-4 space-y-3 flex flex-col justify-between overflow-hidden relative border border-turmeric-500/30"
@@ -451,7 +404,7 @@ export const HomePage: React.FC = () => {
                     className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105 group-hover:opacity-0"
                   />
                   <img
-                    src={p.altImg}
+                    src={p.altImg || p.mainImg}
                     alt={`${p.title} Alt`}
                     className="absolute inset-0 w-full h-full object-cover scale-105 opacity-0 transition-all duration-700 group-hover:scale-100 group-hover:opacity-100"
                   />
@@ -465,7 +418,7 @@ export const HomePage: React.FC = () => {
                       className="w-full py-2 px-3 rounded-lg bg-turmeric-500 text-midnight font-bold text-[11px] flex items-center justify-center gap-1.5 shadow-lg hover:bg-turmeric-400 transition-colors whitespace-nowrap cursor-pointer"
                     >
                       <ShoppingBag className="w-3.5 h-3.5 shrink-0" />
-                      <span className="whitespace-nowrap">Quick add · Rs {p.price}</span>
+                      <span className="whitespace-nowrap">Quick add · Rs {p.price.toLocaleString()}</span>
                     </button>
                   </div>
                 </div>
@@ -475,7 +428,7 @@ export const HomePage: React.FC = () => {
                   <h3 className="font-serif text-base font-bold text-charcoal dark:text-paper mt-0.5 group-hover:text-turmeric-500 transition-colors">
                     {p.title}
                   </h3>
-                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mt-1 line-clamp-2 font-normal">{p.desc}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mt-1 line-clamp-2 font-normal">{p.shortDesc}</p>
                 </div>
               </div>
 

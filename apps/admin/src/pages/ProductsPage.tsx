@@ -1,189 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { fetchApi } from '../lib/api';
-import { Plus, Edit2, Trash2, Search, Box, Image as ImageIcon, Check, CheckCircle2, AlertCircle } from 'lucide-react';
-import { IProduct } from '@farms/shared-types';
-
-const INITIAL_SYNC_PRODUCTS: IProduct[] = [
-  {
-    _id: 'prod-001',
-    title: 'Turmeric Powder (Haldi)',
-    slug: 'turmeric-powder',
-    description: 'Our signature Haldi — cold-ground organic roots from Changa Manga, sun-dried and slowly milled to protect natural curcumin, essential oils, and vibrant golden aroma.',
-    shortDescription: 'Organic roots, sun-dried and slowly cold-ground to protect natural curcumin.',
-    category: 'Spices',
-    price: 650,
-    compareAtPrice: 750,
-    sku: 'SPICE-TUR-01',
-    stock: 85,
-    weight: '200g',
-    images: [{ url: '/farms-images/turmeric-main.jpg', alt: 'Turmeric Powder' }],
-    tags: ['organic', 'haldi', 'cold-ground', 'spices'],
-    isFeatured: true,
-    isActive: true,
-    ratingAvg: 4.9,
-    ratingCount: 128,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    _id: 'prod-002',
-    title: 'Coriander Powder (Dhania)',
-    slug: 'coriander-powder',
-    description: 'Freshly milled Dhania seeds with a rich earthy aroma and cooling citrusy note for every traditional curry and lentil recipe.',
-    shortDescription: 'Freshly ground Dhania with a rich aroma and cooling citrusy lift for every curry.',
-    category: 'Spices',
-    price: 550,
-    compareAtPrice: 650,
-    sku: 'SPICE-COR-02',
-    stock: 92,
-    weight: '200g',
-    images: [{ url: '/farms-images/coriander-main.jpg', alt: 'Coriander Powder' }],
-    tags: ['organic', 'dhania', 'spices'],
-    isFeatured: true,
-    isActive: true,
-    ratingAvg: 4.8,
-    ratingCount: 94,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    _id: 'prod-003',
-    title: 'Red Chilli Powder (Lal Mirch)',
-    slug: 'red-chilli-powder',
-    description: 'Sun-ripened chillies slowly stone-ground — a vibrant red powder with clean, sharp heat without artificial colors or seed dilution.',
-    shortDescription: 'Sun-ripened chillies slowly ground — vibrant red powder with clean, sharp heat.',
-    category: 'Spices',
-    price: 600,
-    compareAtPrice: 700,
-    sku: 'SPICE-CHI-03',
-    stock: 64,
-    weight: '200g',
-    images: [{ url: '/farms-images/chilli-main.jpg', alt: 'Red Chilli Powder' }],
-    tags: ['organic', 'lal-mirch', 'spices'],
-    isFeatured: true,
-    isActive: true,
-    ratingAvg: 4.9,
-    ratingCount: 110,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    _id: 'prod-004',
-    title: 'Pure Raw Sidr Honey (Berry)',
-    slug: 'pure-sidr-honey',
-    description: 'Single-origin unfiltered wild Berry Sidr honey harvested from the nectar of wild Sidr trees in Changa Manga. Unheated and enzyme-rich.',
-    shortDescription: 'Raw, unheated monofloral Sidr honey directly from Changa Manga wild groves.',
-    category: 'Honey',
-    price: 2400,
-    compareAtPrice: 2800,
-    sku: 'HNY-SDR-04',
-    stock: 42,
-    weight: '500g',
-    images: [{ url: '/farms-images/honey-main.jpg', alt: 'Pure Raw Sidr Honey' }],
-    tags: ['honey', 'sidr', 'raw', 'wellness'],
-    isFeatured: true,
-    isActive: true,
-    ratingAvg: 5.0,
-    ratingCount: 215,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    _id: 'prod-005',
-    title: 'Wild Mountain Shilajit (Salajit)',
-    slug: 'wild-mountain-shilajit',
-    description: 'Purified gold-grade Himalayan Shilajit resin containing over 84 minerals and fulvic acid for stamina, energy, and vitality.',
-    shortDescription: '100% Pure gold-grade Himalayan resin rich in natural fulvic acid & minerals.',
-    category: 'Wellness',
-    price: 3200,
-    compareAtPrice: 3800,
-    sku: 'WLN-SHL-05',
-    stock: 35,
-    weight: '30g',
-    images: [{ url: '/farms-images/shilajit-main.jpg', alt: 'Wild Mountain Shilajit' }],
-    tags: ['shilajit', 'salajit', 'wellness', 'organic'],
-    isFeatured: true,
-    isActive: true,
-    ratingAvg: 4.9,
-    ratingCount: 178,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    _id: 'prod-006',
-    title: 'Organic Turmeric Capsules',
-    slug: 'organic-turmeric-capsules',
-    description: 'High-potency organic curcumin extract paired with black pepper piperine for maximum cellular absorption and natural joint support.',
-    shortDescription: 'High-potency curcumin extract with piperine for optimal bio-absorption.',
-    category: 'Wellness',
-    price: 1250,
-    compareAtPrice: 1500,
-    sku: 'WLN-CAP-06',
-    stock: 58,
-    weight: '60 Capsules',
-    images: [{ url: '/farms-images/capsules-main.jpg', alt: 'Organic Turmeric Capsules' }],
-    tags: ['curcumin', 'capsules', 'wellness'],
-    isFeatured: false,
-    isActive: true,
-    ratingAvg: 4.7,
-    ratingCount: 65,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    _id: 'prod-007',
-    title: 'Whole Cumin Seeds (Zeera)',
-    slug: 'cumin-seeds',
-    description: 'Aromatic whole white cumin seeds with intense warmth and earthy aroma, carefully cleaned and graded for tempering.',
-    shortDescription: 'Aromatic whole white cumin seeds with intense natural aroma.',
-    category: 'Spices',
-    price: 700,
-    compareAtPrice: 800,
-    sku: 'SPICE-CUM-07',
-    stock: 75,
-    weight: '200g',
-    images: [{ url: '/farms-images/spices-spread.jpg', alt: 'Whole Cumin Seeds' }],
-    tags: ['zeera', 'cumin', 'spices'],
-    isFeatured: false,
-    isActive: true,
-    ratingAvg: 4.8,
-    ratingCount: 42,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    _id: 'prod-008',
-    title: 'Organic Garam Masala',
-    slug: 'garam-masala',
-    description: 'Heritage 12-spice royal blend roasted and ground in small farm batches to deliver authentic Mughlai fragrance and depth.',
-    shortDescription: 'Heritage 12-spice blend roasted and ground in small farm batches.',
-    category: 'Spices',
-    price: 850,
-    compareAtPrice: 950,
-    sku: 'SPICE-GRM-08',
-    stock: 60,
-    weight: '150g',
-    images: [{ url: '/farms-images/spices-spread.jpg', alt: 'Organic Garam Masala' }],
-    tags: ['garam-masala', 'spices', 'blend'],
-    isFeatured: false,
-    isActive: true,
-    ratingAvg: 4.9,
-    ratingCount: 88,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
+import { Plus, Edit2, Trash2, Search, Box, Check, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useProductStore, ProductItem } from '../store/productStore';
 
 export const ProductsPage: React.FC = () => {
-  const [products, setProducts] = useState<IProduct[]>(() => {
-    const saved = localStorage.getItem('farms_admin_products');
-    return saved ? JSON.parse(saved) : INITIAL_SYNC_PRODUCTS;
-  });
-  const [loading, setLoading] = useState(false);
+  const products = useProductStore((s) => s.products);
+  const loading = useProductStore((s) => s.loading);
+  const fetchProducts = useProductStore((s) => s.fetchProducts);
+  const updateProduct = useProductStore((s) => s.updateProduct);
+  const addProduct = useProductStore((s) => s.addProduct);
+  const deleteProduct = useProductStore((s) => s.deleteProduct);
+
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<IProduct | null>(null);
+  const [editingProduct, setEditingProduct] = useState<ProductItem | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
@@ -194,168 +24,94 @@ export const ProductsPage: React.FC = () => {
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
-    description: '',
-    shortDescription: '',
-    category: 'Spices',
+    urduTitle: '',
+    urduShort: '',
+    category: 'Spices' as 'Spices' | 'Honey' | 'Wellness',
     price: 650,
-    compareAtPrice: 750,
-    sku: '',
-    stock: 50,
     weight: '200g',
-    tags: 'organic, spices',
-    imageUrl: '/farms-images/turmeric-main.jpg',
-    model3dUrl: '',
+    shortDesc: '',
+    mainImg: '/farms-images/turmeric-main.jpg',
+    stock: 50,
     isFeatured: true,
   });
 
-  const loadProducts = () => {
-    setLoading(true);
-    const query = new URLSearchParams();
-    if (search) query.set('search', search);
-    if (categoryFilter) query.set('category', categoryFilter);
-
-    fetchApi(`/products?${query.toString()}`)
-      .then((res) => {
-        if (res.data?.items && res.data.items.length > 0) {
-          setProducts(res.data.items);
-          localStorage.setItem('farms_admin_products', JSON.stringify(res.data.items));
-        }
-      })
-      .catch(() => {
-        // Retain synchronized products
-      })
-      .finally(() => setLoading(false));
-  };
-
   useEffect(() => {
-    loadProducts();
-  }, [search, categoryFilter]);
+    fetchProducts();
+  }, []);
 
   const handleOpenCreate = () => {
     setEditingProduct(null);
     setFormData({
       title: '',
       slug: '',
-      description: '',
-      shortDescription: '',
+      urduTitle: '',
+      urduShort: '',
       category: 'Spices',
       price: 650,
-      compareAtPrice: 750,
-      sku: `SKU-${Date.now().toString().slice(-6)}`,
-      stock: 50,
       weight: '200g',
-      tags: 'organic, pure',
-      imageUrl: '/farms-images/spices-spread.jpg',
-      model3dUrl: '',
+      shortDesc: '',
+      mainImg: '/farms-images/spices-spread.jpg',
+      stock: 50,
       isFeatured: false,
     });
     setIsModalOpen(true);
   };
 
-  const handleOpenEdit = (product: IProduct) => {
+  const handleOpenEdit = (product: ProductItem) => {
     setEditingProduct(product);
     setFormData({
       title: product.title,
       slug: product.slug,
-      description: product.description,
-      shortDescription: product.shortDescription,
-      category: product.category as string,
+      urduTitle: product.urduTitle || product.title,
+      urduShort: product.urduShort || product.title,
+      category: product.category,
       price: product.price,
-      compareAtPrice: product.compareAtPrice || product.price + 100,
-      sku: product.sku,
-      stock: product.stock,
       weight: product.weight,
-      tags: product.tags?.join(', ') || '',
-      imageUrl: product.images[0]?.url || '/farms-images/spices-spread.jpg',
-      model3dUrl: product.model3d?.url || '',
-      isFeatured: product.isFeatured,
+      shortDesc: product.shortDesc,
+      mainImg: product.mainImg,
+      stock: product.stock || 50,
+      isFeatured: product.isFeatured ?? false,
     });
     setIsModalOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload: IProduct = {
-      _id: editingProduct ? editingProduct._id : `prod-${Date.now()}`,
+    const itemData: ProductItem = {
+      id: editingProduct ? editingProduct.id : `prod-${Date.now()}`,
       title: formData.title,
       slug: formData.slug || formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-      description: formData.description,
-      shortDescription: formData.shortDescription,
+      urduTitle: formData.urduTitle || formData.title,
+      urduShort: formData.urduShort || formData.title,
       category: formData.category,
       price: Number(formData.price),
-      compareAtPrice: Number(formData.compareAtPrice),
-      sku: formData.sku,
-      stock: Number(formData.stock),
       weight: formData.weight,
-      images: [{ url: formData.imageUrl, alt: formData.title }],
-      tags: formData.tags.split(',').map((t) => t.trim()),
-      model3d: formData.model3dUrl ? { url: formData.model3dUrl, format: 'glb' } : undefined,
+      shortDesc: formData.shortDesc,
+      mainImg: formData.mainImg,
+      stock: Number(formData.stock),
       isFeatured: formData.isFeatured,
-      isActive: true,
-      ratingAvg: editingProduct?.ratingAvg || 4.9,
-      ratingCount: editingProduct?.ratingCount || 1,
-      createdAt: editingProduct?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     };
 
-    try {
-      if (editingProduct) {
-        await fetchApi(`/products/${editingProduct._id}`, {
-          method: 'PUT',
-          body: JSON.stringify(payload),
-        });
-        const updated = products.map((p) => (p._id === editingProduct._id ? payload : p));
-        setProducts(updated);
-        localStorage.setItem('farms_admin_products', JSON.stringify(updated));
-        showToast(`Product "${payload.title}" updated successfully!`, 'success');
-      } else {
-        await fetchApi('/products', {
-          method: 'POST',
-          body: JSON.stringify(payload),
-        });
-        const updated = [payload, ...products];
-        setProducts(updated);
-        localStorage.setItem('farms_admin_products', JSON.stringify(updated));
-        showToast(`Product "${payload.title}" created successfully!`, 'success');
-      }
-      setIsModalOpen(false);
-    } catch {
-      // Local sync fallback
-      if (editingProduct) {
-        const updated = products.map((p) => (p._id === editingProduct._id ? payload : p));
-        setProducts(updated);
-        localStorage.setItem('farms_admin_products', JSON.stringify(updated));
-        showToast(`Product "${payload.title}" updated locally!`, 'success');
-      } else {
-        const updated = [payload, ...products];
-        setProducts(updated);
-        localStorage.setItem('farms_admin_products', JSON.stringify(updated));
-        showToast(`Product "${payload.title}" added to catalog!`, 'success');
-      }
-      setIsModalOpen(false);
+    if (editingProduct) {
+      await updateProduct(editingProduct.id, itemData);
+      showToast(`Product "${itemData.title}" updated successfully! Price: Rs. ${itemData.price.toLocaleString()}`, 'success');
+    } else {
+      await addProduct(itemData);
+      showToast(`New product "${itemData.title}" added to live catalog!`, 'success');
     }
+    setIsModalOpen(false);
   };
 
   const handleDelete = async (id: string, title: string) => {
-    try {
-      await fetchApi(`/products/${id}`, { method: 'DELETE' });
-      const updated = products.filter((p) => p._id !== id);
-      setProducts(updated);
-      localStorage.setItem('farms_admin_products', JSON.stringify(updated));
-      showToast(`Product "${title}" removed from catalog.`, 'success');
-    } catch {
-      const updated = products.filter((p) => p._id !== id);
-      setProducts(updated);
-      localStorage.setItem('farms_admin_products', JSON.stringify(updated));
-      showToast(`Product "${title}" removed from catalog.`, 'success');
-    }
+    await deleteProduct(id);
+    showToast(`Product "${title}" removed from catalog.`, 'success');
   };
 
   const filteredProducts = products.filter((p) => {
     const matchesSearch =
       p.title.toLowerCase().includes(search.toLowerCase()) ||
-      p.sku.toLowerCase().includes(search.toLowerCase()) ||
-      (p.category as string).toLowerCase().includes(search.toLowerCase());
+      p.slug.toLowerCase().includes(search.toLowerCase()) ||
+      p.category.toLowerCase().includes(search.toLowerCase());
     const matchesCat = !categoryFilter || p.category === categoryFilter;
     return matchesSearch && matchesCat;
   });
@@ -386,10 +142,12 @@ export const ProductsPage: React.FC = () => {
           <div className="flex items-center gap-3">
             <h1 className="text-xl sm:text-2xl font-bold text-slate-100 tracking-tight">Product Catalog</h1>
             <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 border border-amber-500/30 text-amber-400">
-              {products.length} Products Live
+              {products.length} Products Synchronized
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-400 mt-0.5">Manage farm spices, Sidr honey, and 3D model assets synchronized with the storefront.</p>
+          <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
+            Manage prices, stock, and descriptions synchronized with the storefront in real time.
+          </p>
         </div>
         <button
           onClick={handleOpenCreate}
@@ -406,7 +164,7 @@ export const ProductsPage: React.FC = () => {
           <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
           <input
             type="text"
-            placeholder="Search by title, SKU, or tag..."
+            placeholder="Search by title or category..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500/50"
@@ -429,7 +187,7 @@ export const ProductsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Product Table / Cards */}
+      {/* Product Table */}
       <div className="bg-slate-900/80 rounded-2xl border border-slate-800 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs sm:text-sm text-slate-300">
@@ -437,9 +195,8 @@ export const ProductsPage: React.FC = () => {
               <tr>
                 <th className="py-3 px-4">Product</th>
                 <th className="py-3 px-4">Category</th>
-                <th className="py-3 px-4">Price</th>
+                <th className="py-3 px-4">Live Price</th>
                 <th className="py-3 px-4">Stock</th>
-                <th className="py-3 px-4">SKU</th>
                 <th className="py-3 px-4">Featured</th>
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
@@ -447,23 +204,23 @@ export const ProductsPage: React.FC = () => {
             <tbody className="divide-y divide-slate-800/60">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-500">
+                  <td colSpan={6} className="py-8 text-center text-slate-500">
                     Loading products...
                   </td>
                 </tr>
               ) : filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-500">
-                    No products match your search.
+                  <td colSpan={6} className="py-8 text-center text-slate-500">
+                    No products found.
                   </td>
                 </tr>
               ) : (
                 filteredProducts.map((product) => (
-                  <tr key={product._id} className="hover:bg-slate-800/40 transition-colors">
+                  <tr key={product.id} className="hover:bg-slate-800/40 transition-colors">
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-3">
                         <img
-                          src={product.images[0]?.url || '/farms-images/spices-spread.jpg'}
+                          src={product.mainImg}
                           alt={product.title}
                           className="w-10 h-10 object-cover rounded-lg border border-slate-700 bg-slate-950 shrink-0"
                         />
@@ -482,15 +239,10 @@ export const ProductsPage: React.FC = () => {
                       Rs. {product.price.toLocaleString()}
                     </td>
                     <td className="py-3.5 px-4">
-                      <span
-                        className={`font-semibold ${
-                          product.stock < 10 ? 'text-rose-400' : 'text-emerald-400'
-                        }`}
-                      >
-                        {product.stock} units
+                      <span className="font-semibold text-emerald-400">
+                        {product.stock || 50} units
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 font-mono text-xs text-slate-400">{product.sku}</td>
                     <td className="py-3.5 px-4">
                       {product.isFeatured ? (
                         <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400">
@@ -505,12 +257,12 @@ export const ProductsPage: React.FC = () => {
                         <button
                           onClick={() => handleOpenEdit(product)}
                           className="p-1.5 rounded-lg bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-slate-300 transition-colors cursor-pointer"
-                          title="Edit Product"
+                          title="Edit Product Price & Details"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(product._id, product.title)}
+                          onClick={() => handleDelete(product.id, product.title)}
                           className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-500 hover:text-white text-slate-300 transition-colors cursor-pointer"
                           title="Delete Product"
                         >
@@ -531,7 +283,7 @@ export const ProductsPage: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 space-y-4 shadow-2xl">
             <h2 className="text-lg font-bold text-slate-100">
-              {editingProduct ? 'Edit Product' : 'Add New Product'}
+              {editingProduct ? `Edit ${editingProduct.title}` : 'Add New Product'}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -549,8 +301,8 @@ export const ProductsPage: React.FC = () => {
                   <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">Category</label>
                   <select
                     value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs sm:text-sm text-slate-100"
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs sm:text-sm text-slate-100 cursor-pointer"
                   >
                     <option value="Spices">Spices</option>
                     <option value="Honey">Honey</option>
@@ -564,7 +316,7 @@ export const ProductsPage: React.FC = () => {
                     required
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs sm:text-sm text-slate-100"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs sm:text-sm text-slate-100 font-mono"
                   />
                 </div>
                 <div>
@@ -578,16 +330,6 @@ export const ProductsPage: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">SKU</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.sku}
-                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs sm:text-sm text-slate-100 font-mono"
-                  />
-                </div>
-                <div>
                   <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">Weight / Unit</label>
                   <input
                     type="text"
@@ -597,37 +339,25 @@ export const ProductsPage: React.FC = () => {
                     className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs sm:text-sm text-slate-100"
                   />
                 </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">Image Path</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.mainImg}
+                    onChange={(e) => setFormData({ ...formData, mainImg: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs sm:text-sm text-slate-100"
+                  />
+                </div>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">Short Description</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.shortDescription}
-                  onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs sm:text-sm text-slate-100"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">Full Description</label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   required
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs sm:text-sm text-slate-100"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase text-slate-400 mb-1">Product Image URL</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.imageUrl}
-                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                  value={formData.shortDesc}
+                  onChange={(e) => setFormData({ ...formData, shortDesc: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs sm:text-sm text-slate-100"
                 />
               </div>
@@ -641,7 +371,7 @@ export const ProductsPage: React.FC = () => {
                   className="rounded border-slate-800 bg-slate-950 text-amber-500 focus:ring-amber-500 cursor-pointer"
                 />
                 <label htmlFor="isFeatured" className="text-xs sm:text-sm text-slate-300 cursor-pointer">
-                  Feature on Homepage Hero/Grid
+                  Feature on Homepage Hero / Grid
                 </label>
               </div>
 
@@ -657,7 +387,7 @@ export const ProductsPage: React.FC = () => {
                   type="submit"
                   className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs sm:text-sm font-bold shadow-lg shadow-amber-500/10 cursor-pointer"
                 >
-                  Save Product
+                  Save Changes
                 </button>
               </div>
             </form>
