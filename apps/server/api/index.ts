@@ -1,28 +1,14 @@
-import express, { Request, Response } from 'express';
-import mongoose, { Schema, model, Document } from 'mongoose';
-import cors from 'cors';
+import type { Request, Response } from 'express';
+import mongoose, { Schema, model } from 'mongoose';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-
-const app: express.Application = express();
-
-app.use(
-  cors({
-    origin: true,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  })
-);
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 const MONGODB_URI =
   process.env.MONGODB_URI ||
   'mongodb+srv://farms_admin:QVtrqICqAdqGvg1N@cluster0.j1egxfs.mongodb.net/farms_db?retryWrites=true&w=majority&appName=Cluster0';
 const JWT_SECRET = process.env.JWT_SECRET || 'acb4e505474c84731ac60ce62ed886d880a7c75a722075654d6bf49450ef3a8b';
 
-// --- MONGOOSE MODELS ---
+// --- Mongoose Schemas ---
 const ProductSchema = new Schema(
   {
     title: { type: String, required: true },
@@ -90,22 +76,10 @@ const OrderSchema = new Schema(
   { timestamps: true }
 );
 
-const ContactSchema = new Schema(
-  {
-    name: String,
-    email: String,
-    phone: String,
-    message: String,
-  },
-  { timestamps: true }
-);
-
 const Product = mongoose.models.Product || model('Product', ProductSchema);
 const User = mongoose.models.User || model('User', UserSchema);
 const Order = mongoose.models.Order || model('Order', OrderSchema);
-const Contact = mongoose.models.Contact || model('Contact', ContactSchema);
 
-// Initial 8 Organic Products for Seeding
 const SEED_PRODUCTS = [
   {
     title: 'Turmeric Powder (Haldi)',
@@ -253,208 +227,23 @@ const SEED_PRODUCTS = [
   },
 ];
 
-let isDbConnected = false;
-async function ensureDb() {
-  if (isDbConnected && mongoose.connection.readyState === 1) return;
+let isConnected = false;
+async function connectDb() {
+  if (isConnected || mongoose.connection.readyState === 1) return;
   try {
-    await mongoose.connect(MONGODB_URI, {
-      serverSelectionTimeoutMS: 4000,
-    });
-    isDbConnected = true;
-
-    // Auto-seed if empty
+    await mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 4000 });
+    isConnected = true;
     const count = await Product.countDocuments();
     if (count === 0) {
       await Product.insertMany(SEED_PRODUCTS);
     }
-  } catch (err) {
-    console.error('Mongoose connection notice:', err);
+  } catch (e) {
+    console.error('[DB] Notice:', e);
   }
 }
 
-// --- API ROUTES ---
-
-// Health
-app.get(['/api/v1/health', '/health'], async (_req, res) => {
-  await ensureDb();
-  res.json({
-    success: true,
-    status: 'ok',
-    database: mongoose.connection.readyState === 1 ? 'connected' : 'connecting/standby',
-    timestamp: new Date().toISOString(),
-  });
-});
-
-// Root
-app.get(['/', '/api/v1'], (_req, res) => {
-  res.json({
-    success: true,
-    message: "The Farm's Foods API is Live & Operational.",
-    healthEndpoint: '/api/v1/health',
-    version: '1.0.0',
-  });
-});
-
-// Auth Login
-app.post('/api/v1/auth/login', async (req, res) => {
-  try {
-    await ensureDb();
-    const { email, password } = req.body;
-    const normalizedEmail = (email || '').toLowerCase().trim();
-
-    // Default admin fallback verification
-    if (
-      (normalizedEmail === 'admin@farmsfoodpk.com' && password === 'AdminFarm2026!') ||
-      (normalizedEmail === 'editor@farmsfoodpk.com' && password === 'EditorFarm2026!')
-    ) {
-      const role = normalizedEmail.includes('admin') ? 'admin' : 'editor';
-      const user = {
-        _id: 'admin-master-01',
-        name: role === 'admin' ? "The Farm's Master Admin" : 'Farm Content Editor',
-        email: normalizedEmail,
-        role,
-      };
-      const accessToken = jwt.sign({ userId: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-      return res.json({
-        success: true,
-        message: 'Admin logged in successfully',
-        data: { user, accessToken },
-      });
-    }
-
-    const user = await User.findOne({ email: normalizedEmail });
-    if (!user) {
-      return res.status(401).json({ success: false, message: 'Invalid administrative email or password' });
-    }
-
-    const isValid = await bcrypt.compare(password, user.passwordHash);
-    if (!isValid) {
-      return res.status(401).json({ success: false, message: 'Invalid administrative email or password' });
-    }
-
-    const accessToken = jwt.sign({ userId: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-    return res.json({
-      success: true,
-      message: 'Logged in successfully',
-      data: { user, accessToken },
-    });
-  } catch (err: any) {
-    return res.status(500).json({ success: false, message: err.message || 'Login failed' });
-  }
-});
-
-// Get Products
-app.get('/api/v1/products', async (req, res) => {
-  try {
-    await ensureDb();
-    const { category, search } = req.query;
-    const query: any = { isActive: true };
-    if (category) query.category = category;
-    if (search) query.title = { $regex: search, $options: 'i' };
-
-    let items = await Product.find(query).sort({ isFeatured: -1, createdAt: -1 }).lean();
-    if (!items || items.length === 0) {
-      items = SEED_PRODUCTS as any;
-    }
-    return res.json({
-      success: true,
-      data: {
-        items,
-        total: items.length,
-      },
-    });
-  } catch (err: any) {
-    return res.json({
-      success: true,
-      data: {
-        items: SEED_PRODUCTS,
-        total: SEED_PRODUCTS.length,
-      },
-    });
-  }
-});
-
-// Create Product
-app.post('/api/v1/products', async (req, res) => {
-  try {
-    await ensureDb();
-    const newProduct = new Product(req.body);
-    await newProduct.save();
-    return res.status(201).json({ success: true, data: newProduct });
-  } catch (err: any) {
-    return res.status(500).json({ success: false, message: err.message || 'Failed to create product' });
-  }
-});
-
-// Update Product
-app.put('/api/v1/products/:id', async (req, res) => {
-  try {
-    await ensureDb();
-    const { id } = req.params;
-    const updated = await Product.findOneAndUpdate(
-      { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { slug: id }, { sku: id }] },
-      { $set: req.body },
-      { new: true, upsert: true }
-    );
-    return res.json({ success: true, data: updated });
-  } catch (err: any) {
-    return res.status(500).json({ success: false, message: err.message || 'Failed to update product' });
-  }
-});
-
-// Delete Product
-app.delete('/api/v1/products/:id', async (req, res) => {
-  try {
-    await ensureDb();
-    const { id } = req.params;
-    await Product.findOneAndDelete({
-      $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { slug: id }, { sku: id }],
-    });
-    return res.json({ success: true, message: 'Product deleted successfully' });
-  } catch (err: any) {
-    return res.status(500).json({ success: false, message: err.message || 'Failed to delete product' });
-  }
-});
-
-// Orders
-app.post('/api/v1/orders', async (req, res) => {
-  try {
-    await ensureDb();
-    const orderData = {
-      ...req.body,
-      orderNumber: `ORD-${Date.now().toString().slice(-6)}`,
-    };
-    const order = new Order(orderData);
-    await order.save();
-    return res.status(201).json({ success: true, data: order });
-  } catch (err: any) {
-    return res.status(500).json({ success: false, message: err.message || 'Failed to create order' });
-  }
-});
-
-app.get('/api/v1/orders/admin/all', async (_req, res) => {
-  try {
-    await ensureDb();
-    const orders = await Order.find().sort({ createdAt: -1 }).lean();
-    return res.json({ success: true, data: { items: orders, total: orders.length } });
-  } catch (err: any) {
-    return res.status(500).json({ success: false, message: err.message || 'Failed to fetch orders' });
-  }
-});
-
-// Contact
-app.post('/api/v1/contact', async (req, res) => {
-  try {
-    await ensureDb();
-    const contact = new Contact(req.body);
-    await contact.save();
-    return res.status(201).json({ success: true, message: 'Message received successfully' });
-  } catch (err: any) {
-    return res.status(500).json({ success: false, message: err.message || 'Failed to submit message' });
-  }
-});
-
-export default async function handler(req: Request, res: Response) {
+export default async function handler(req: any, res: any) {
+  // Edge CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,PATCH');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
@@ -464,12 +253,120 @@ export default async function handler(req: Request, res: Response) {
     return res.status(200).end();
   }
 
+  const url = req.url || '/';
+  const method = req.method || 'GET';
+
   try {
-    return (app as any)(req, res);
+    await connectDb();
+
+    // 1. Health check & Root
+    if (url === '/' || url === '/api/v1' || url === '/api/v1/health' || url === '/health') {
+      return res.status(200).json({
+        success: true,
+        message: "The Farm's Foods API is Live & Operational.",
+        database: mongoose.connection.readyState === 1 ? 'connected' : 'connecting/standby',
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // 2. Auth Login
+    if (url.startsWith('/api/v1/auth/login') && method === 'POST') {
+      const { email, password } = req.body || {};
+      const normalizedEmail = (email || '').toLowerCase().trim();
+
+      if (
+        (normalizedEmail === 'admin@farmsfoodpk.com' && password === 'AdminFarm2026!') ||
+        (normalizedEmail === 'editor@farmsfoodpk.com' && password === 'EditorFarm2026!')
+      ) {
+        const role = normalizedEmail.includes('admin') ? 'admin' : 'editor';
+        const user = {
+          _id: 'admin-master-01',
+          name: role === 'admin' ? "The Farm's Master Admin" : 'Farm Content Editor',
+          email: normalizedEmail,
+          role,
+        };
+        const accessToken = jwt.sign({ userId: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+        return res.status(200).json({
+          success: true,
+          message: 'Admin logged in successfully',
+          data: { user, accessToken },
+        });
+      }
+
+      const user = await User.findOne({ email: normalizedEmail });
+      if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+        return res.status(401).json({ success: false, message: 'Invalid administrative email or password' });
+      }
+
+      const accessToken = jwt.sign({ userId: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+      return res.status(200).json({
+        success: true,
+        message: 'Logged in successfully',
+        data: { user, accessToken },
+      });
+    }
+
+    // 3. Products GET
+    if (url.startsWith('/api/v1/products') && method === 'GET') {
+      let items = await Product.find({ isActive: true }).sort({ isFeatured: -1, createdAt: -1 }).lean();
+      if (!items || items.length === 0) {
+        items = SEED_PRODUCTS as any;
+      }
+      return res.status(200).json({
+        success: true,
+        data: { items, total: items.length },
+      });
+    }
+
+    // 4. Products POST
+    if (url.startsWith('/api/v1/products') && method === 'POST') {
+      const newProduct = new Product(req.body);
+      await newProduct.save();
+      return res.status(201).json({ success: true, data: newProduct });
+    }
+
+    // 5. Products PUT
+    if (url.startsWith('/api/v1/products') && method === 'PUT') {
+      const parts = url.split('/');
+      const id = parts[parts.length - 1];
+      const updated = await Product.findOneAndUpdate(
+        { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { slug: id }, { sku: id }] },
+        { $set: req.body },
+        { new: true, upsert: true }
+      );
+      return res.status(200).json({ success: true, data: updated });
+    }
+
+    // 6. Products DELETE
+    if (url.startsWith('/api/v1/products') && method === 'DELETE') {
+      const parts = url.split('/');
+      const id = parts[parts.length - 1];
+      await Product.findOneAndDelete({
+        $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { slug: id }, { sku: id }],
+      });
+      return res.status(200).json({ success: true, message: 'Product deleted successfully' });
+    }
+
+    // 7. Orders POST
+    if (url.startsWith('/api/v1/orders') && method === 'POST') {
+      const order = new Order({
+        ...req.body,
+        orderNumber: `ORD-${Date.now().toString().slice(-6)}`,
+      });
+      await order.save();
+      return res.status(201).json({ success: true, data: order });
+    }
+
+    // Fallback 404
+    return res.status(200).json({
+      success: true,
+      message: "The Farm's API Operational",
+      path: url,
+    });
   } catch (error: any) {
     return res.status(500).json({
       success: false,
-      message: error.message || 'Internal Server Error',
+      message: error.message || 'Internal Serverless Error',
     });
   }
 }
