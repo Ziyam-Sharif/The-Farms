@@ -147,7 +147,7 @@ export const BlogPage: React.FC = () => {
               </p>
 
               <div className="flex flex-wrap gap-1.5 sm:gap-2 pt-1">
-                {featured.tags.slice(0, 3).map((tag) => (
+                {featured.tags?.slice(0, 3).map((tag: string) => (
                   <span key={tag} className="px-2.5 py-1 rounded-full bg-turmeric-500/08 border border-turmeric-500/20 text-turmeric-600 dark:text-turmeric-400 text-[10px] font-bold uppercase tracking-wide">
                     {tag}
                   </span>
@@ -202,7 +202,7 @@ export const BlogPage: React.FC = () => {
                 </p>
 
                 <div className="flex flex-wrap gap-1.5 pt-1">
-                  {post.tags.slice(0, 2).map((tag) => (
+                  {post.tags?.slice(0, 2).map((tag: string) => (
                     <span key={tag} className="px-2 py-0.5 rounded-full bg-turmeric-500/08 border border-turmeric-500/20 text-turmeric-600 dark:text-turmeric-400 text-[9px] font-bold uppercase tracking-wide">
                       {tag}
                     </span>
