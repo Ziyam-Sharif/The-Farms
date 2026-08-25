@@ -1,6 +1,10 @@
 import { IApiResponse } from '@farms/shared-types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+    ? 'https://the-farms-server.vercel.app/api/v1'
+    : 'http://localhost:5000/api/v1');
 
 let accessToken: string | null = null;
 
@@ -23,17 +27,21 @@ export async function fetchApi<T = any>(
     headers['Authorization'] = `Bearer ${accessToken}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-    credentials: 'include', // Include httpOnly refresh cookie
-  });
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
 
-  const data = await response.json();
+    const data = await response.json();
 
-  if (!response.ok) {
-    throw new Error(data.message || 'API request failed');
+    if (!response.ok) {
+      throw new Error(data.message || `API request returned HTTP ${response.status}`);
+    }
+
+    return data;
+  } catch (error: any) {
+    console.error(`[API Call Failed: ${endpoint}]`, error.message || error);
+    throw error;
   }
-
-  return data;
 }

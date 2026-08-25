@@ -92,19 +92,28 @@ export const ProductsPage: React.FC = () => {
       isFeatured: formData.isFeatured,
     };
 
-    if (editingProduct) {
-      await updateProduct(editingProduct.id, itemData);
-      showToast(`Product "${itemData.title}" updated successfully! Price: Rs. ${itemData.price.toLocaleString()}`, 'success');
-    } else {
-      await addProduct(itemData);
-      showToast(`New product "${itemData.title}" added to live catalog!`, 'success');
+    try {
+      if (editingProduct) {
+        await updateProduct(editingProduct.id, itemData);
+        showToast(`Product "${itemData.title}" updated! Price: Rs. ${itemData.price.toLocaleString()}`, 'success');
+      } else {
+        await addProduct(itemData);
+        showToast(`New product "${itemData.title}" added to live catalog!`, 'success');
+      }
+      setIsModalOpen(false);
+    } catch (err: any) {
+      showToast(`Cloud Sync Notice: Saved locally. (${err.message || 'API Unreachable'})`, 'error');
+      setIsModalOpen(false);
     }
-    setIsModalOpen(false);
   };
 
   const handleDelete = async (id: string, title: string) => {
-    await deleteProduct(id);
-    showToast(`Product "${title}" removed from catalog.`, 'success');
+    try {
+      await deleteProduct(id);
+      showToast(`Product "${title}" removed from catalog.`, 'success');
+    } catch (err: any) {
+      showToast(`Failed to remove product: ${err.message}`, 'error');
+    }
   };
 
   const filteredProducts = products.filter((p) => {
