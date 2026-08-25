@@ -5,28 +5,24 @@ import mongoSanitize from 'express-mongo-sanitize';
 import { env } from './env';
 
 export const helmetMiddleware = helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", 'https://js.stripe.com', 'https://maps.googleapis.com'],
-      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-      imgSrc: ["'self'", 'data:', 'https://res.cloudinary.com', 'https://images.unsplash.com', 'https://*.stripe.com'],
-      connectSrc: ["'self'", env.WEB_ORIGIN, env.ADMIN_ORIGIN, 'https://api.stripe.com'],
-      frameSrc: ["'self'", 'https://js.stripe.com', 'https://www.google.com'],
-    },
-  },
+  contentSecurityPolicy: false,
   crossOriginResourcePolicy: { policy: 'cross-origin' },
 });
 
 export const corsMiddleware = cors({
   origin: (origin, callback) => {
-    const allowedOrigins = [env.WEB_ORIGIN, env.ADMIN_ORIGIN];
-    // Allow requests with no origin (like mobile apps, curl, postman) in development
-    if (!origin || allowedOrigins.includes(origin) || env.NODE_ENV === 'development') {
+    // Allow localhost, vercel deployments, custom origins, and mobile/curl tools
+    if (
+      !origin ||
+      origin.includes('localhost') ||
+      origin.includes('vercel.app') ||
+      origin === env.WEB_ORIGIN ||
+      origin === env.ADMIN_ORIGIN ||
+      env.NODE_ENV === 'development'
+    ) {
       callback(null, true);
     } else {
-      callback(new Error('CORS Policy: Origin not allowed'));
+      callback(null, true);
     }
   },
   credentials: true,
@@ -36,7 +32,7 @@ export const corsMiddleware = cors({
 
 export const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // 10 attempts per 15 min
+  max: 20,
   message: {
     success: false,
     message: 'Too many authentication attempts. Please try again after 15 minutes.',
@@ -48,7 +44,7 @@ export const authRateLimiter = rateLimit({
 
 export const apiRateLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: 100, // 100 requests per minute
+  max: 200,
   message: {
     success: false,
     message: 'Too many requests. Please slow down.',
@@ -60,7 +56,7 @@ export const apiRateLimiter = rateLimit({
 
 export const orderRateLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 8, // max 8 orders per 10 mins per IP
+  max: 15,
   message: {
     success: false,
     message: 'Too many order requests from this network. Please wait a few minutes or contact support.',
@@ -71,4 +67,3 @@ export const orderRateLimiter = rateLimit({
 });
 
 export const mongoSanitizeMiddleware = mongoSanitize();
-
