@@ -2,11 +2,13 @@ import mongoose from 'mongoose';
 import dns from 'dns';
 import { env } from './env';
 
-// Attempt to use Google/Cloudflare public DNS servers if available
-try {
-  dns.setServers(['8.8.8.8', '1.1.1.1']);
-} catch {
-  // Ignore in serverless cloud environments
+// Only override DNS on Windows to fix local SRV resolution quirks; NEVER touch DNS on Linux/Vercel
+if (process.platform === 'win32') {
+  try {
+    dns.setServers(['8.8.8.8', '1.1.1.1']);
+  } catch {
+    // Ignore if unsupported
+  }
 }
 
 let cachedPromise: Promise<typeof mongoose> | null = null;
