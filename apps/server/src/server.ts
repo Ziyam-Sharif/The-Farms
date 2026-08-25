@@ -29,7 +29,7 @@ app.use(async (_req, _res, next) => {
     try {
       await connectDB();
     } catch (err: any) {
-      console.warn('[Serverless DB] Connect fallback:', err.message || err);
+      console.warn('[Serverless DB] Connect notice:', err.message || err);
     }
   }
   next();
@@ -78,8 +78,9 @@ app.use('/api/v1/admin', adminRoutes);
 // Centralized Error Handler
 app.use(errorHandler);
 
-// Standalone server execution (Local / Container)
-if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
+// Standalone server execution ONLY when run directly in CLI (NEVER inside serverless lambdas)
+const isDirectCliRun = typeof require !== 'undefined' && require.main === module;
+if (isDirectCliRun && !process.env.VERCEL && !process.env.NOW_REGION) {
   connectDB()
     .then(() => {
       console.log('[Server] MongoDB connected successfully.');
