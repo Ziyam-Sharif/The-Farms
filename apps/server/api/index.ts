@@ -94,7 +94,10 @@ const SEED_PRODUCTS = [
     sku: 'SPICE-TUR-01',
     stock: 85,
     weight: '200g',
-    images: [{ url: '/farms-images/turmeric-main.jpg', alt: 'Turmeric Powder' }],
+    images: [
+      { url: '/farms-images/turmeric-main.jpg', alt: 'Turmeric Powder' },
+      { url: '/farms-images/turmeric-alt.jpg', alt: 'Turmeric Powder View' },
+    ],
     tags: ['organic', 'haldi', 'spices'],
     isFeatured: true,
     isActive: true,
@@ -112,7 +115,10 @@ const SEED_PRODUCTS = [
     sku: 'SPICE-COR-02',
     stock: 92,
     weight: '200g',
-    images: [{ url: '/farms-images/coriander-main.jpg', alt: 'Coriander Powder' }],
+    images: [
+      { url: '/farms-images/coriander-main.jpg', alt: 'Coriander Powder' },
+      { url: '/farms-images/coriander-alt.jpg', alt: 'Coriander Powder View' },
+    ],
     tags: ['organic', 'dhania', 'spices'],
     isFeatured: true,
     isActive: true,
@@ -130,7 +136,10 @@ const SEED_PRODUCTS = [
     sku: 'SPICE-CHI-03',
     stock: 64,
     weight: '200g',
-    images: [{ url: '/farms-images/chilli-main.jpg', alt: 'Red Chilli Powder' }],
+    images: [
+      { url: '/farms-images/chilli-main.jpg', alt: 'Red Chilli Powder' },
+      { url: '/farms-images/chilli-alt.jpg', alt: 'Red Chilli Powder View' },
+    ],
     tags: ['organic', 'lal-mirch', 'spices'],
     isFeatured: true,
     isActive: true,
@@ -148,7 +157,10 @@ const SEED_PRODUCTS = [
     sku: 'HNY-SDR-04',
     stock: 42,
     weight: '500g',
-    images: [{ url: '/farms-images/honey-main.jpg', alt: 'Pure Raw Sidr Honey' }],
+    images: [
+      { url: '/farms-images/honey-main.jpg', alt: 'Pure Raw Sidr Honey' },
+      { url: '/farms-images/honey-main.jpg', alt: 'Pure Raw Sidr Honey View' },
+    ],
     tags: ['honey', 'sidr', 'wellness'],
     isFeatured: true,
     isActive: true,
@@ -166,7 +178,10 @@ const SEED_PRODUCTS = [
     sku: 'WLN-SHL-05',
     stock: 35,
     weight: '20g',
-    images: [{ url: '/farms-images/shilajit-main.jpg', alt: 'Wild Mountain Shilajit' }],
+    images: [
+      { url: '/farms-images/shilajit-main.jpg', alt: 'Wild Mountain Shilajit' },
+      { url: '/farms-images/shilajit-main.jpg', alt: 'Wild Mountain Shilajit View' },
+    ],
     tags: ['shilajit', 'salajit', 'wellness'],
     isFeatured: true,
     isActive: true,
@@ -184,7 +199,10 @@ const SEED_PRODUCTS = [
     sku: 'WLN-CAP-06',
     stock: 58,
     weight: '60 Capsules',
-    images: [{ url: '/farms-images/capsules-main.jpg', alt: 'Organic Turmeric Capsules' }],
+    images: [
+      { url: '/farms-images/capsules-main.jpg', alt: 'Organic Turmeric Capsules' },
+      { url: '/farms-images/capsules-main.jpg', alt: 'Organic Turmeric Capsules View' },
+    ],
     tags: ['curcumin', 'capsules', 'wellness'],
     isFeatured: false,
     isActive: true,
@@ -202,7 +220,10 @@ const SEED_PRODUCTS = [
     sku: 'SPICE-CUM-07',
     stock: 75,
     weight: '200g',
-    images: [{ url: '/farms-images/spices-spread.jpg', alt: 'Whole Cumin Seeds' }],
+    images: [
+      { url: '/farms-images/spices-spread.jpg', alt: 'Whole Cumin Seeds' },
+      { url: '/farms-images/coriander-alt.jpg', alt: 'Whole Cumin Seeds View' },
+    ],
     tags: ['zeera', 'cumin', 'spices'],
     isFeatured: false,
     isActive: true,
@@ -220,7 +241,10 @@ const SEED_PRODUCTS = [
     sku: 'SPICE-GRM-08',
     stock: 60,
     weight: '150g',
-    images: [{ url: '/farms-images/spices-spread.jpg', alt: 'Organic Garam Masala' }],
+    images: [
+      { url: '/farms-images/spices-spread.jpg', alt: 'Organic Garam Masala' },
+      { url: '/farms-images/spices-spread.jpg', alt: 'Organic Garam Masala View' },
+    ],
     tags: ['garam-masala', 'spices'],
     isFeatured: false,
     isActive: true,
@@ -233,9 +257,52 @@ async function connectDb() {
   try {
     await mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 4000 });
     isConnected = true;
-    const count = await Product.countDocuments();
-    if (count === 0) {
-      await Product.insertMany(SEED_PRODUCTS);
+
+    // Auto-normalize any legacy unsplash URLs to high-res local assets
+    const oldProducts = await Product.find({ 'images.0.url': { $regex: 'unsplash' } });
+    for (const p of oldProducts) {
+      const title = (p.title || '').toLowerCase();
+      let img = '/farms-images/spices-spread.jpg';
+      let alt = '/farms-images/spices-spread.jpg';
+      let urdu = 'خالص';
+      if (title.includes('honey') || title.includes('sidr')) {
+        img = '/farms-images/honey-main.jpg';
+        alt = '/farms-images/honey-main.jpg';
+        urdu = 'شہد';
+      } else if (title.includes('cumin') || title.includes('zeera')) {
+        img = '/farms-images/spices-spread.jpg';
+        alt = '/farms-images/coriander-alt.jpg';
+        urdu = 'زیرہ';
+      } else if (title.includes('turmeric') || title.includes('haldi')) {
+        img = '/farms-images/turmeric-main.jpg';
+        alt = '/farms-images/turmeric-alt.jpg';
+        urdu = 'ہلدی';
+      } else if (title.includes('coriander') || title.includes('dhania')) {
+        img = '/farms-images/coriander-main.jpg';
+        alt = '/farms-images/coriander-alt.jpg';
+        urdu = 'دھنیا';
+      } else if (title.includes('chilli') || title.includes('mirch')) {
+        img = '/farms-images/chilli-main.jpg';
+        alt = '/farms-images/chilli-alt.jpg';
+        urdu = 'لال مرچ';
+      } else if (title.includes('shilajit') || title.includes('salajit')) {
+        img = '/farms-images/shilajit-main.jpg';
+        alt = '/farms-images/shilajit-main.jpg';
+        urdu = 'سلاجیت';
+      } else if (title.includes('capsule') || title.includes('curcumin')) {
+        img = '/farms-images/capsules-main.jpg';
+        alt = '/farms-images/capsules-main.jpg';
+        urdu = 'کیپسول';
+      }
+      await Product.updateOne(
+        { _id: p._id },
+        {
+          $set: {
+            images: [{ url: img, alt: p.title }, { url: alt, alt: p.title }],
+            urduShort: urdu,
+          },
+        }
+      );
     }
   } catch (e) {
     console.error('[DB] Notice:', e);
@@ -358,7 +425,8 @@ export default async function handler(req: any, res: any) {
 
     // 6. Products PUT
     if (url.startsWith('/api/v1/products') && method === 'PUT') {
-      const parts = url.split('/');
+      const cleanPath = url.split('?')[0];
+      const parts = cleanPath.split('/');
       const id = parts[parts.length - 1];
       const updated = await Product.findOneAndUpdate(
         { $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { slug: id }, { sku: id }] },
@@ -371,7 +439,8 @@ export default async function handler(req: any, res: any) {
 
     // 7. Products DELETE
     if (url.startsWith('/api/v1/products') && method === 'DELETE') {
-      const parts = url.split('/');
+      const cleanPath = url.split('?')[0];
+      const parts = cleanPath.split('/');
       const id = parts[parts.length - 1];
       await Product.findOneAndDelete({
         $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { slug: id }, { sku: id }],
