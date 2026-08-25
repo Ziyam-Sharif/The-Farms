@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import { fetchApi } from '../lib/api';
 
 export interface ProductItem {
@@ -144,82 +143,94 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
 interface ProductState {
   products: ProductItem[];
   loading: boolean;
+  error: string | null;
   fetchProducts: () => Promise<void>;
   updateProduct: (id: string, updates: Partial<ProductItem>) => Promise<void>;
   addProduct: (product: ProductItem) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
 }
 
-export const useProductStore = create<ProductState>()(
-  persist(
-    (set, get) => ({
-      products: INITIAL_PRODUCTS,
-      loading: false,
-      fetchProducts: async () => {
-        set({ loading: true });
-        try {
-          const res = await fetchApi('/products');
-          if (res.data?.items && res.data.items.length > 0) {
-            const mapped: ProductItem[] = res.data.items.map((p: any) => ({
-              id: p._id || p.id,
-              slug: p.slug,
-              title: p.title,
-              urduTitle: p.urduTitle || p.title,
-              urduShort: p.urduShort || p.title,
-              category: p.category as any,
-              price: Number(p.price),
-              weight: p.weight || '200g',
-              shortDesc: p.shortDescription || p.description || '',
-              mainImg: p.images?.[0]?.url || '/farms-images/spices-spread.jpg',
-              altImg: p.images?.[1]?.url || p.images?.[0]?.url || '/farms-images/spices-spread.jpg',
-              stock: Number(p.stock) || 50,
-              isFeatured: Boolean(p.isFeatured),
-            }));
-            set({ products: mapped, loading: false });
-          } else {
-            set({ loading: false });
-          }
-        } catch {
-          set({ loading: false });
-        }
-      },
-      updateProduct: async (id, updates) => {
-        const current = get().products;
-        const updated = current.map((p) => (p.id === id || p.slug === id ? { ...p, ...updates } : p));
-        set({ products: updated });
-        try {
-          await fetchApi(`/products/${id}`, {
-            method: 'PUT',
-            body: JSON.stringify(updates),
-          });
-        } catch {
-          // Keep local sync
-        }
-      },
-      addProduct: async (product) => {
-        const updated = [product, ...get().products];
-        set({ products: updated });
-        try {
-          await fetchApi('/products', {
-            method: 'POST',
-            body: JSON.stringify(product),
-          });
-        } catch {
-          // Keep local sync
-        }
-      },
-      deleteProduct: async (id) => {
-        const updated = get().products.filter((p) => p.id !== id && p.slug !== id);
-        set({ products: updated });
-        try {
-          await fetchApi(`/products/${id}`, { method: 'DELETE' });
-        } catch {
-          // Keep local sync
-        }
-      },
-    }),
-    {
-      name: 'farms_shared_catalog_v2',
+export const useProductStore = create<ProductState>((set, get) => ({
+  products: INITIAL_PRODUCTS,
+  loading: false,
+  error: null,
+  fetchProducts: async () => {
+    set({ loading: true, error: null });
+    try {
+      const res = await fetchApi('/products');
+      if (res.data?.items && res.data.items.length > 0) {
+        const mapped: ProductItem[] = res.data.items.map((p: any) => ({
+          id: p._id || p.id,
+          slug: p.slug,
+          title: p.title,
+          urduTitle: p.urduTitle || p.title,
+          urduShort: p.urduShort || p.title,
+          category: p.category as any,
+          price: Number(p.price),
+          weight: p.weight || '200g',
+          shortDesc: p.shortDescription || p.description || '',
+          mainImg: p.images?.[0]?.url || '/farms-images/spices-spread.jpg',
+          altImg: p.images?.[1]?.url || p.images?.[0]?.url || '/farms-images/spices-spread.jpg',
+          stock: Number(p.stock) || 50,
+          isFeatured: Boolean(p.isFeatured),
+        }));
+        set({ products: mapped, loading: false, error: null });
+      } else {
+        set({ loading: false, error: null });
+      }
+    } catch (err: any) {
+      set({
+        loading: false,
+        error: err.message || 'Failed to fetch products from backend API',
+      });
+      throw err;
     }
-  )
-);
+  },
+  updateProduct: async (id, updates) => {
+    // 1. Send update to API first
+    await fetchApi(`/products/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+
+    // 2. Only update state upon confirmed API success
+    const current = get().products;
+    const updated = current.map((p) => (p.id === id || p.slug === id ? { ...p, ...updates } : p));
+    set({ products: updated });
+  },
+  addProduct: async (product) => {
+    // 1. Send create to API first
+    const res = await fetchApi('/products', {
+      method: 'POST',
+      body: JSON.stringify(product),
+    });
+
+    // 2. Only update state upon confirmed API success
+    const createdItem: ProductItem = res.data
+      ? {
+          id: res.data._id || product.id,
+          slug: res.data.slug || product.slug,
+          title: res.data.title || product.title,
+          urduTitle: res.data.urduTitle || product.urduTitle,
+          urduShort: res.data.urduShort || product.urduShort,
+          category: res.data.category || product.category,
+          price: Number(res.data.price || product.price),
+          weight: res.data.weight || product.weight,
+          shortDesc: res.data.shortDescription || product.shortDesc,
+          mainImg: res.data.images?.[0]?.url || product.mainImg,
+          stock: Number(res.data.stock || product.stock),
+          isFeatured: Boolean(res.data.isFeatured),
+        }
+      : product;
+
+    set({ products: [createdItem, ...get().products] });
+  },
+  deleteProduct: async (id) => {
+    // 1. Send delete to API first
+    await fetchApi(`/products/${id}`, { method: 'DELETE' });
+
+    // 2. Only update state upon confirmed API success
+    const updated = get().products.filter((p) => p.id !== id && p.slug !== id);
+    set({ products: updated });
+  },
+}));

@@ -102,8 +102,7 @@ export const ProductsPage: React.FC = () => {
       }
       setIsModalOpen(false);
     } catch (err: any) {
-      showToast(`Cloud Sync Notice: Saved locally. (${err.message || 'API Unreachable'})`, 'error');
-      setIsModalOpen(false);
+      showToast(`API Operation Failed: ${err.message || 'Could not connect to backend server'}`, 'error');
     }
   };
 
@@ -112,7 +111,7 @@ export const ProductsPage: React.FC = () => {
       await deleteProduct(id);
       showToast(`Product "${title}" removed from catalog.`, 'success');
     } catch (err: any) {
-      showToast(`Failed to remove product: ${err.message}`, 'error');
+      showToast(`Failed to delete product: ${err.message || 'API Unreachable'}`, 'error');
     }
   };
 
