@@ -13,3 +13,8 @@ pnpm-debug.log*
 coverage
 .cache
 .vite
+api/*.js
+api/*.js.map
+apps/server/api/*.js
+apps/server/api/*.js.map
+*.tsbuildinfo
