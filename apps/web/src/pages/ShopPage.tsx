@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, ArrowRight, Check, Filter } from 'lucide-react';
+import { ShoppingBag, ArrowRight, Filter, AlertCircle, RefreshCw } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 import { useProductStore, ProductItem } from '../store/productStore';
 
@@ -8,6 +8,8 @@ export const ShopPage: React.FC = () => {
   const [sortOption, setSortOption] = useState<string>('featured');
 
   const products = useProductStore((s) => s.products);
+  const loading = useProductStore((s) => s.loading);
+  const error = useProductStore((s) => s.error);
   const fetchProducts = useProductStore((s) => s.fetchProducts);
   const addItem = useCartStore((s) => s.addItem);
   const openCart = useCartStore((s) => s.openCart);
@@ -70,6 +72,26 @@ export const ShopPage: React.FC = () => {
           </p>
         </div>
 
+        {/* Live Server Error Notice */}
+        {error && (
+          <div className="p-4 sm:p-5 rounded-2xl bg-rose-500/10 border border-rose-500/25 text-rose-300 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-6 h-6 text-rose-400 shrink-0" />
+              <div>
+                <h4 className="text-sm font-bold text-rose-200">Live Server Connection Notice</h4>
+                <p className="text-xs text-rose-300/80">{error}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => fetchProducts()}
+              className="px-4 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer shrink-0"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Retry Connection</span>
+            </button>
+          </div>
+        )}
+
         {/* Filter and Sort Bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl glass-panel border border-turmeric-500/20 shadow-turmeric-sm">
           {/* Category Tabs */}
@@ -105,61 +127,71 @@ export const ShopPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="py-20 text-center space-y-3">
+            <div className="w-8 h-8 border-2 border-turmeric-500 border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-xs text-slate-400">Loading authentic harvest catalog from live cloud...</p>
+          </div>
+        )}
+
         {/* Products Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
-          {sortedItems.map((item) => (
-            <div
-              key={item.id}
-              className="product-card group flex flex-col justify-between rounded-3xl overflow-hidden glass-panel border border-turmeric-500/20 shadow-turmeric-md hover:border-turmeric-500/40 hover:shadow-turmeric-xl transition-all duration-400"
-            >
-              {/* Product Image Box */}
-              <div className="relative aspect-square overflow-hidden bg-gradient-to-b from-charcoal/40 to-black/60 p-4 flex items-center justify-center">
-                <img
-                  src={item.mainImg}
-                  alt={item.title}
-                  className="w-full h-full object-contain group-hover:scale-108 transition-transform duration-600 drop-shadow-2xl"
-                />
-                <span className="absolute top-3.5 left-3.5 px-2.5 py-1 rounded-full bg-turmeric-500/90 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow-md">
-                  {item.category}
-                </span>
-                <span className="absolute top-3.5 right-3.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-turmeric-500/30 text-turmeric-300 text-[10px] font-semibold">
-                  {item.weight}
-                </span>
-              </div>
-
-              {/* Product Content */}
-              <div className="p-5 sm:p-6 flex flex-col flex-1 justify-between space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-baseline justify-between gap-2">
-                    <h3 className="font-serif text-lg sm:text-xl font-bold text-paper group-hover:text-turmeric-400 transition-colors leading-snug">
-                      {item.title}
-                    </h3>
-                  </div>
-                  <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">
-                    {item.shortDesc}
-                  </p>
+        {!loading && sortedItems.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
+            {sortedItems.map((item) => (
+              <div
+                key={item.id}
+                className="product-card group flex flex-col justify-between rounded-3xl overflow-hidden glass-panel border border-turmeric-500/20 shadow-turmeric-md hover:border-turmeric-500/40 hover:shadow-turmeric-xl transition-all duration-400"
+              >
+                {/* Product Image Box */}
+                <div className="relative aspect-square overflow-hidden bg-gradient-to-b from-charcoal/40 to-black/60 p-4 flex items-center justify-center">
+                  <img
+                    src={item.mainImg}
+                    alt={item.title}
+                    className="w-full h-full object-contain group-hover:scale-108 transition-transform duration-600 drop-shadow-2xl"
+                  />
+                  <span className="absolute top-3.5 left-3.5 px-2.5 py-1 rounded-full bg-turmeric-500/90 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow-md">
+                    {item.category}
+                  </span>
+                  <span className="absolute top-3.5 right-3.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-turmeric-500/30 text-turmeric-300 text-[10px] font-semibold">
+                    {item.weight}
+                  </span>
                 </div>
 
-                <div className="pt-4 border-t border-turmeric-500/15 flex items-center justify-between gap-2">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-wider text-slate-400 block font-medium">Price</span>
-                    <span className="font-serif text-xl sm:text-2xl font-bold text-turmeric-400">
-                      Rs. {item.price.toLocaleString()}
-                    </span>
+                {/* Product Content */}
+                <div className="p-5 sm:p-6 flex flex-col flex-1 justify-between space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <h3 className="font-serif text-lg sm:text-xl font-bold text-paper group-hover:text-turmeric-400 transition-colors leading-snug">
+                        {item.title}
+                      </h3>
+                    </div>
+                    <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">
+                      {item.shortDesc}
+                    </p>
                   </div>
 
-                  <button
-                    onClick={() => handleAddToCart(item)}
-                    className="btn-shimmer px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-md shadow-turmeric-500/20 active:scale-95 transition-all shrink-0 cursor-pointer"
-                  >
-                    <ShoppingBag className="w-4 h-4 shrink-0" />
-                    <span>Add to Cart</span>
-                  </button>
+                  <div className="pt-4 border-t border-turmeric-500/15 flex items-center justify-between gap-2">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-wider text-slate-400 block font-medium">Price</span>
+                      <span className="font-serif text-xl sm:text-2xl font-bold text-turmeric-400">
+                        Rs. {item.price.toLocaleString()}
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => handleAddToCart(item)}
+                      className="btn-shimmer px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-md shadow-turmeric-500/20 active:scale-95 transition-all shrink-0 cursor-pointer"
+                    >
+                      <ShoppingBag className="w-4 h-4 shrink-0" />
+                      <span>Add to Cart</span>
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Wholesale Callout Banner */}
         <div className="rounded-3xl p-8 sm:p-12 glass-panel border border-turmeric-500/30 bg-gradient-to-r from-forest-950/80 via-charcoal/90 to-amber-950/40 relative overflow-hidden text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl">

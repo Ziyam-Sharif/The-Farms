@@ -11,6 +11,7 @@ import {
   Users,
   Star,
   FlaskConical,
+  AlertCircle,
 } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -131,6 +132,8 @@ export const HomePage: React.FC = () => {
   const openCart = useCartStore((s) => s.openCart);
 
   const products = useProductStore((s) => s.products);
+  const loading = useProductStore((s) => s.loading);
+  const error = useProductStore((s) => s.error);
   const fetchProducts = useProductStore((s) => s.fetchProducts);
 
   useEffect(() => {
@@ -390,65 +393,92 @@ export const HomePage: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-4 gap-4 sm:gap-6 2xl:gap-8 justify-center">
-          {(products.slice(0, 4)).map((p) => (
-            <div
-              key={p.id}
-              className="product-card group p-3.5 sm:p-4 space-y-3 flex flex-col justify-between overflow-hidden relative border border-turmeric-500/30"
+        {error && (
+          <div className="p-4 sm:p-5 rounded-2xl bg-rose-500/10 border border-rose-500/25 text-rose-300 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
+              <div>
+                <h4 className="text-sm font-bold text-rose-200">Catalog Offline Notice</h4>
+                <p className="text-xs text-rose-300/80">{error}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => fetchProducts()}
+              className="px-3.5 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 text-xs font-bold transition-colors cursor-pointer shrink-0"
             >
-              <div className="space-y-3">
-                <div className="relative aspect-square rounded-xl overflow-hidden bg-slate-900 border border-turmeric-500/20">
-                  <img
-                    src={p.mainImg}
-                    alt={p.title}
-                    className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105 group-hover:opacity-0"
-                  />
-                  <img
-                    src={p.altImg || p.mainImg}
-                    alt={`${p.title} Alt`}
-                    className="absolute inset-0 w-full h-full object-cover scale-105 opacity-0 transition-all duration-700 group-hover:scale-100 group-hover:opacity-100"
-                  />
-                  <span className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-turmeric-500 text-midnight text-[11px] font-serif font-bold shadow-turmeric-sm z-10">
-                    {p.urduShort}
-                  </span>
+              Retry
+            </button>
+          </div>
+        )}
 
-                  <div className="absolute inset-x-0 bottom-0 p-3 translate-y-full group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300 z-20">
-                    <button
-                      onClick={() => handleQuickAdd(p)}
-                      className="w-full py-2 px-3 rounded-lg bg-turmeric-500 text-midnight font-bold text-[11px] flex items-center justify-center gap-1.5 shadow-lg hover:bg-turmeric-400 transition-colors whitespace-nowrap cursor-pointer"
-                    >
-                      <ShoppingBag className="w-3.5 h-3.5 shrink-0" />
-                      <span className="whitespace-nowrap">Quick add · Rs {p.price.toLocaleString()}</span>
-                    </button>
+        {loading && (
+          <div className="py-12 text-center space-y-2">
+            <div className="w-6 h-6 border-2 border-turmeric-500 border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-xs text-slate-400">Syncing live harvest catalog...</p>
+          </div>
+        )}
+
+        {!loading && products.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-4 gap-4 sm:gap-6 2xl:gap-8 justify-center">
+            {(products.slice(0, 4)).map((p) => (
+              <div
+                key={p.id}
+                className="product-card group p-3.5 sm:p-4 space-y-3 flex flex-col justify-between overflow-hidden relative border border-turmeric-500/30"
+              >
+                <div className="space-y-3">
+                  <div className="relative aspect-square rounded-xl overflow-hidden bg-slate-900 border border-turmeric-500/20">
+                    <img
+                      src={p.mainImg}
+                      alt={p.title}
+                      className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105 group-hover:opacity-0"
+                    />
+                    <img
+                      src={p.altImg || p.mainImg}
+                      alt={`${p.title} Alt`}
+                      className="absolute inset-0 w-full h-full object-cover scale-105 opacity-0 transition-all duration-700 group-hover:scale-100 group-hover:opacity-100"
+                    />
+                    <span className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-turmeric-500 text-midnight text-[11px] font-serif font-bold shadow-turmeric-sm z-10">
+                      {p.urduShort}
+                    </span>
+
+                    <div className="absolute inset-x-0 bottom-0 p-3 translate-y-full group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300 z-20">
+                      <button
+                        onClick={() => handleQuickAdd(p)}
+                        className="w-full py-2 px-3 rounded-lg bg-turmeric-500 text-midnight font-bold text-[11px] flex items-center justify-center gap-1.5 shadow-lg hover:bg-turmeric-400 transition-colors whitespace-nowrap cursor-pointer"
+                      >
+                        <ShoppingBag className="w-3.5 h-3.5 shrink-0" />
+                        <span className="whitespace-nowrap">Quick add · Rs {p.price.toLocaleString()}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-turmeric-500">{p.category}</span>
+                    <h3 className="font-serif text-base font-bold text-charcoal dark:text-paper mt-0.5 group-hover:text-turmeric-500 transition-colors">
+                      {p.title}
+                    </h3>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mt-1 line-clamp-2 font-normal">{p.shortDesc}</p>
                   </div>
                 </div>
 
-                <div>
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-turmeric-500">{p.category}</span>
-                  <h3 className="font-serif text-base font-bold text-charcoal dark:text-paper mt-0.5 group-hover:text-turmeric-500 transition-colors">
-                    {p.title}
-                  </h3>
-                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mt-1 line-clamp-2 font-normal">{p.shortDesc}</p>
+                <div className="pt-3 border-t border-turmeric-500/15 flex items-center justify-between mt-2">
+                  <div>
+                    <span className="font-serif text-base sm:text-lg font-bold text-charcoal dark:text-paper">Rs {p.price.toLocaleString()}</span>
+                    <span className="text-[10px] text-slate-500 font-medium block">{p.weight}</span>
+                  </div>
+
+                  <button
+                    onClick={() => handleQuickAdd(p)}
+                    className="px-3 py-1.5 rounded-lg border border-turmeric-500/40 text-charcoal dark:text-paper hover:bg-turmeric-500 hover:text-midnight font-bold text-[11px] transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                  >
+                    <ShoppingBag className="w-3.5 h-3.5 shrink-0" />
+                    <span className="whitespace-nowrap">Add</span>
+                  </button>
                 </div>
               </div>
-
-              <div className="pt-3 border-t border-turmeric-500/15 flex items-center justify-between mt-2">
-                <div>
-                  <span className="font-serif text-base sm:text-lg font-bold text-charcoal dark:text-paper">Rs {p.price}</span>
-                  <span className="text-[10px] text-slate-500 font-medium block">{p.weight}</span>
-                </div>
-
-                <button
-                  onClick={() => handleQuickAdd(p)}
-                  className="px-3 py-1.5 rounded-lg border border-turmeric-500/40 text-charcoal dark:text-paper hover:bg-turmeric-500 hover:text-midnight font-bold text-[11px] transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
-                >
-                  <ShoppingBag className="w-3.5 h-3.5 shrink-0" />
-                  <span className="whitespace-nowrap">Add</span>
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         <div className="text-center pt-2">
           <Link to="/shop" className="text-xs sm:text-sm font-bold text-turmeric-500 hover:underline inline-flex items-center gap-1.5 whitespace-nowrap">
